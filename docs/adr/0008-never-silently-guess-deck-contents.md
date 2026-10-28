@@ -1,0 +1,3 @@
+# Never silently guess what is in a deck
+
+When input is ambiguous, Card Zard reports it instead of guessing. Card names are matched exactly (ignoring case and accents), then by Front-Face Name, and anything else becomes an Unresolved Line with fuzzy suggestions, never an automatic correction. The Analysis still runs on what did resolve and is clearly marked incomplete. If no Commander is given (by a `commanders` field or a `Commander` section header), the Analysis says the Commander is unknown and skips every check that depends on Color Identity. Ignored Sections are listed back to the user. We chose this because a wrong guess quietly corrupts every Count after it, while an honest gap is visible and easy to fix.
