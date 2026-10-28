@@ -1,0 +1,9 @@
+# Store text files with LF line endings and check them out as LF on every OS.
+# Overrides each developer's core.autocrlf setting, so Windows checkouts stop
+# getting CRLF.
+* text=auto eol=lf
+
+# Windows-only scripts need CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
