@@ -1,7 +1,53 @@
 [project]
 name = "card-zard"
 version = "0.1.0"
-description = "Add your description here"
+description = "Commander deck analysis from real card data"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "fastapi>=0.162.0",
+    "httpx>=0.28.1",
+    "ijson>=3.6.0",
+    "uvicorn>=0.54.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/card_zard", "backend/card_zard_api"]
+
+[tool.ruff]
+target-version = "py313"
+src = ["src", "backend"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "TID"]
+
+# ADR-0009: the core package stays free of any web framework.
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"fastapi".msg = "Only the API layer in backend/ may use FastAPI (ADR-0009)."
+"starlette".msg = "Only the API layer in backend/ may use Starlette (ADR-0009)."
+
+[tool.ruff.lint.per-file-ignores]
+"backend/**" = ["TID251"]
+"tests/api/**" = ["TID251"]
+
+[tool.pyright]
+include = ["src", "backend", "tests"]
+pythonVersion = "3.13"
+venvPath = "."
+venv = ".venv"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["--strict-markers"]
+
+[dependency-groups]
+dev = [
+    "httpx2>=2.16.0",
+    "pyright>=1.1.414",
+    "pytest>=9.2.0",
+    "ruff>=0.17.3",
+]
