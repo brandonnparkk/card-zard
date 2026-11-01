@@ -3,7 +3,6 @@ from pathlib import Path
 
 import httpx
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 RAW_DATA_DIR = PROJECT_ROOT / "data" / "raw"
 OUTPUT_FILE = RAW_DATA_DIR / "oracle-cards.jsonl"
@@ -40,7 +39,7 @@ def get_oracle_cards_url() -> str:
 
 def download_file(url: str, destination: Path) -> None:
     """Stream a gzipped file to disk, decompressing as it downloads."""
-    print(f"Downloading Oracle Cards...")
+    print("Downloading Oracle Cards...")
     print(f"Destination: {destination}")
 
     destination.parent.mkdir(parents=True, exist_ok=True)
