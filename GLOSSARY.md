@@ -23,7 +23,7 @@ The full name of a Card. For multi-faced cards this is both faces joined by ` //
 The name of only the first face of a multi-faced Card, for example _Fable of the Mirror-Breaker_.
 
 **Snapshot**:
-A complete, versioned copy of Scryfall's card data at a point in time. Every Analysis is produced against exactly one Snapshot.
+A recorded load of Scryfall's card data, identified by a version. Card data always holds the latest Snapshot; earlier Snapshots remain only as records of when and from which file they were loaded. Every Analysis is produced against exactly one Snapshot.
 _Avoid_: Dump, cache, database
 
 **Oracle Tag**:
@@ -40,7 +40,7 @@ _Avoid_: Decklist file, import
 One line of a Deck List naming a quantity and a card, such as `1 Sol Ring (C21) 263`.
 
 **Resolved Deck**:
-The result of matching every Deck Line to a Card in a Snapshot: the Commanders, the Main Deck, and any Unresolved Lines.
+The result of matching every Deck Line to a Card in the current Snapshot: the Commanders, the Main Deck, and any Unresolved Lines.
 _Avoid_: Parsed deck, deck object
 
 **Unresolved Line**:
