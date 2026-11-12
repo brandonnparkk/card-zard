@@ -1,0 +1,26 @@
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      # The user and database names aren't secret. The password is: it comes
+      # from the gitignored .env file, and compose refuses to start without it.
+      # Postgres only reads it when the volume is first created; to change it
+      # later, run ALTER ROLE (see .env.example).
+      POSTGRES_USER: card_zard
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env (copy .env.example)}
+      POSTGRES_DB: card_zard
+    ports:
+      # 127.0.0.1 only, so other machines on the network can't reach it.
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Runs only when the volume is empty (first start).
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U card_zard -d card_zard"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

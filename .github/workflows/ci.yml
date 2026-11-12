@@ -2,13 +2,43 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 jobs:
   check:
     runs-on: ubuntu-latest
+
+    # Same image, user and database names as docker-compose.yml.
+    services:
+      db:
+        image: pgvector/pgvector:pg17
+        # No password at all: this container exists only for one CI run and
+        # is reachable only from the runner, so trust auth is safe here and
+        # keeps credentials out of the workflow. Never use trust elsewhere.
+        env:
+          POSTGRES_USER: card_zard
+          POSTGRES_DB: card_zard
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U card_zard -d card_zard"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql+psycopg://card_zard@localhost:5432/card_zard
+      TEST_DATABASE_URL: postgresql+psycopg://card_zard@localhost:5432/card_zard_test
+
     steps:
       - uses: actions/checkout@v5
+
+      # Service containers start before checkout, so they can't mount
+      # docker/initdb; run the same script with psql instead.
+      - name: Create test database
+        run: psql -v ON_ERROR_STOP=1 -h localhost -U card_zard -d card_zard -f docker/initdb/01-create-test-db.sql
 
       - uses: astral-sh/setup-uv@v6
         with:

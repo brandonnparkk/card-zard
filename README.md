@@ -1,6 +1,6 @@
 # Card Zard
 
-A Magic: The Gathering deck analysis assistant for the Commander format. Domain terms are defined in [GLOSSARY.md](GLOSSARY.md), the plan is in [docs/roadmap.md](docs/roadmap.md), and the decisions behind it are in [docs/adr/](docs/adr/).
+A Magic: The Gathering deck analysis assistant for the Commander format. Domain terms are defined in [GLOSSARY.md](GLOSSARY.md), and the decisions behind it are in [docs/adr/](docs/adr/).
 
 ## Layout
 
