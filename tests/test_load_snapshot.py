@@ -319,6 +319,22 @@ def test_reloading_the_same_file_returns_the_existing_snapshot(
     assert count_rows(session, "snapshots") == 1
 
 
+def test_an_older_file_is_reloaded_if_a_different_one_came_since(
+    session: Session, tmp_path: Path
+) -> None:
+    """Only the latest Snapshot's hash counts: A, then B, then A reloads A."""
+    card_a, card_b = make_card(name="From A"), make_card(name="From B")
+    file_a = write_cards(tmp_path / "a.jsonl", [card_a])
+    first_a = load(session, file_a)
+    load(session, write_cards(tmp_path / "b.jsonl", [card_b]))
+
+    second_a = load(session, file_a)
+
+    assert second_a.id != first_a.id
+    assert count_rows(session, "snapshots") == 3
+    assert set(cards_by_oracle_id(session)) == {card_a["oracle_id"]}
+
+
 def test_a_failed_load_leaves_earlier_cards_and_snapshots_unchanged(
     session: Session, tmp_path: Path
 ) -> None:
