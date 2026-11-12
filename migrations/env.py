@@ -1,4 +1,5 @@
 from logging.config import fileConfig
+from pathlib import Path
 
 from alembic import context
 from sqlalchemy import create_engine, pool
@@ -6,6 +7,16 @@ from sqlalchemy import create_engine, pool
 # Importing the models registers their tables on Base.metadata.
 import card_zard.snapshots.models  # noqa: F401
 from card_zard.db import Base, database_url
+
+# Locally, DATABASE_URL comes from the gitignored .env file. python-dotenv is a
+# dev dependency: a deployment installs without it and sets DATABASE_URL from
+# its secret settings, so a missing package just means "nothing to load".
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    pass
+else:
+    load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

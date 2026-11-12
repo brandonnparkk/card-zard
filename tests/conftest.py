@@ -11,16 +11,26 @@ from pathlib import Path
 import pytest
 from alembic import command
 from alembic.config import Config
+from dotenv import load_dotenv
 from sqlalchemy import Engine, create_engine, make_url, text
 from sqlalchemy.orm import Session
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-# Matches .env.example and docker/initdb/01-create-test-db.sql.
-TEST_DATABASE_URL = os.environ.get(
-    "TEST_DATABASE_URL",
-    "postgresql+psycopg://card_zard:card_zard@localhost:5433/card_zard_test",
-)
+# Locally, TEST_DATABASE_URL comes from the gitignored .env file. Variables
+# already set in the environment win (load_dotenv doesn't override them), which
+# is how CI supplies its own. No .env file is fine: this is then a no-op.
+load_dotenv(REPO_ROOT / ".env")
+
+
+def _test_database_url() -> str:
+    url = os.environ.get("TEST_DATABASE_URL")
+    if not url:
+        pytest.fail(
+            "TEST_DATABASE_URL is not set. Copy .env.example to .env and fill it in.",
+            pytrace=False,
+        )
+    return url
 
 
 def _reset_schema(engine: Engine) -> None:
@@ -43,15 +53,16 @@ def db_engine() -> Iterator[Engine]:
 
     Runs once per test session, before the first test that needs it.
     """
-    database = make_url(TEST_DATABASE_URL).database or ""
+    url = _test_database_url()
+    database = make_url(url).database or ""
     # The schema is dropped below, so never point this at a real database.
     assert database.endswith("_test"), (
         f"TEST_DATABASE_URL must name a *_test database, not {database!r}"
     )
 
-    engine = create_engine(TEST_DATABASE_URL)
+    engine = create_engine(url)
     _reset_schema(engine)
-    _upgrade_to_head(TEST_DATABASE_URL)
+    _upgrade_to_head(url)
     yield engine
     engine.dispose()
 
