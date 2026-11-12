@@ -8,7 +8,7 @@ Issues live in GitHub Issues on brandonnparkk/card-zard, managed with the `gh` C
 
 ### Triage labels
 
-The five default triage labels (needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix); feature tickets get `ready-for-human`. See `docs/agents/triage-labels.md`.
+The five default triage labels (needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix); feature tickets get `ready-for-agent` and are built in phases the developer reviews. See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 
