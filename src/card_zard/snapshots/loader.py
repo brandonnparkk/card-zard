@@ -17,11 +17,12 @@ from pathlib import Path
 from typing import Any, cast
 from uuid import UUID
 
-from sqlalchemy import CursorResult, Uuid, any_, bindparam, delete, select
+from sqlalchemy import CursorResult, Uuid, any_, bindparam, delete
 from sqlalchemy.dialects.postgresql import ARRAY, Insert, insert
 from sqlalchemy.orm import Session
 
 from card_zard.snapshots.bulk_file import CardRow, read_card_rows
+from card_zard.snapshots.latest import latest_snapshot
 from card_zard.snapshots.models import Card, Snapshot
 
 logger = logging.getLogger(__name__)
@@ -55,9 +56,7 @@ def load_snapshot(session: Session, path: Path) -> Snapshot:
 
     # Only the latest Snapshot counts. Loading file A, then B, then A again
     # must reload A: the cards table currently holds B's data.
-    latest = session.scalars(
-        select(Snapshot).order_by(Snapshot.id.desc()).limit(1)
-    ).first()
+    latest = latest_snapshot(session)
     if latest is not None and latest.source_sha256 == sha256:
         logger.info("%s matches Snapshot %s; skipping the load", path.name, latest.id)
         return latest
