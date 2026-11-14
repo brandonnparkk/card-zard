@@ -2,7 +2,8 @@
 
 For now names must match exactly, character for character. Ignoring case and
 accents, Front-Face Names and suggestions come in a later ticket (#5).
-Commanders come in #6, so for now every resolved card is in the Main Deck.
+Commander lines are matched here and kept apart from the Main Deck. Checking
+that they can really lead the deck is #6's job.
 
 Whatever can't be matched to exactly one Card becomes an Unresolved Line and
 the rest of the deck still resolves. Nothing is guessed (ADR-0008).
@@ -17,7 +18,12 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from card_zard.decks.deck_list import ParsedDeckList
+from card_zard.decks.deck_list import (
+    DeckLine,
+    IgnoredSection,
+    ParsedDeckList,
+    SectionHeader,
+)
 from card_zard.snapshots.latest import latest_snapshot
 from card_zard.snapshots.models import Card
 
@@ -66,16 +72,23 @@ class ResolvedDeck:
     snapshot_version: str
     # In the order each Card first appears in the Deck List.
     main_deck: tuple[ResolvedCard, ...]
-    # In line order.
+    # In line order, from the Main Deck and the Commander lines alike.
     unresolved_lines: tuple[UnresolvedLine, ...]
+    # From a Commander header or a commander marker. Empty means the Deck
+    # List didn't say who leads the deck; it's never guessed.
+    commanders: tuple[ResolvedCard, ...] = ()
+    # Passed through from parsing, so the user sees what was left out.
+    ignored_sections: tuple[IgnoredSection, ...] = ()
+    unrecognized_headers: tuple[SectionHeader, ...] = ()
 
 
 def resolve_deck(session: Session, parsed: ParsedDeckList) -> ResolvedDeck:
     """Match `parsed` against the Cards of the latest Snapshot.
 
     A Card listed on several lines is merged into one ResolvedCard with the
-    quantities added up. Checking Commander's one-copy rule is legality's job
-    (#9), not resolution's.
+    quantities added up, separately for the Main Deck and the Commanders.
+    Checking Commander's one-copy rule is legality's job (#9), not
+    resolution's.
 
     Raises NoSnapshotError if no Snapshot was ever loaded.
     """
@@ -83,20 +96,43 @@ def resolve_deck(session: Session, parsed: ParsedDeckList) -> ResolvedDeck:
     if snapshot is None:
         raise NoSnapshotError("no Snapshot has been loaded yet")
 
+    # One query for every name in the deck, commanders included.
     ids_by_name = _oracle_ids_by_name(
-        session, {line.card_name for line in parsed.deck_lines}
+        session,
+        {line.card_name for line in parsed.main_deck_lines + parsed.commander_lines},
     )
 
-    # A plain dict keeps insertion order, so the Main Deck comes out in the
-    # order each Card first appears.
-    quantities: dict[UUID, int] = {}
-    names: dict[UUID, str] = {}
     unresolved = [
         UnresolvedLine(line.line_number, line.text, "not_a_deck_line")
         for line in parsed.unparsed_lines
     ]
+    commanders = _resolve_lines(parsed.commander_lines, ids_by_name, unresolved)
+    main_deck = _resolve_lines(parsed.main_deck_lines, ids_by_name, unresolved)
 
-    for line in parsed.deck_lines:
+    return ResolvedDeck(
+        snapshot_version=snapshot.version,
+        main_deck=main_deck,
+        # Collected from three places, so sort to put everything back in the
+        # order the user typed it.
+        unresolved_lines=tuple(sorted(unresolved, key=lambda u: u.line_number)),
+        commanders=commanders,
+        ignored_sections=parsed.ignored_sections,
+        unrecognized_headers=parsed.unrecognized_headers,
+    )
+
+
+def _resolve_lines(
+    lines: Iterable[DeckLine],
+    ids_by_name: dict[str, list[UUID]],
+    unresolved: list[UnresolvedLine],
+) -> tuple[ResolvedCard, ...]:
+    """Match `lines`, merging repeats; append the failures to `unresolved`."""
+    # A plain dict keeps insertion order, so Cards come out in the order each
+    # first appears.
+    quantities: dict[UUID, int] = {}
+    names: dict[UUID, str] = {}
+
+    for line in lines:
         oracle_ids = ids_by_name.get(line.card_name, [])
         if len(oracle_ids) == 1:
             [oracle_id] = oracle_ids
@@ -108,15 +144,9 @@ def resolve_deck(session: Session, parsed: ParsedDeckList) -> ResolvedDeck:
             )
             unresolved.append(UnresolvedLine(line.line_number, line.text, reason))
 
-    return ResolvedDeck(
-        snapshot_version=snapshot.version,
-        main_deck=tuple(
-            ResolvedCard(oracle_id, names[oracle_id], quantity)
-            for oracle_id, quantity in quantities.items()
-        ),
-        # Unparsed lines were added first, so sort to put everything back in
-        # the order the user typed it.
-        unresolved_lines=tuple(sorted(unresolved, key=lambda u: u.line_number)),
+    return tuple(
+        ResolvedCard(oracle_id, names[oracle_id], quantity)
+        for oracle_id, quantity in quantities.items()
     )
 
 

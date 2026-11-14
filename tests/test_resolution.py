@@ -176,14 +176,12 @@ def test_a_name_shared_by_several_cards_is_not_guessed(
 def test_lines_that_are_not_deck_lines_are_unresolved_in_line_order(
     session: Session, snapshot: Snapshot
 ) -> None:
-    deck = resolve(session, "1 Sol Rnig\nSideboard\n1 Sol Ring\n1x Arcane Signet")
+    deck = resolve(session, "1 Sol Rnig\n0 Sol Ring\n1 Sol Ring\n0 Arcane Signet")
 
     assert deck.unresolved_lines == (
         UnresolvedLine(line_number=1, text="1 Sol Rnig", reason="no_matching_card"),
-        UnresolvedLine(line_number=2, text="Sideboard", reason="not_a_deck_line"),
-        UnresolvedLine(
-            line_number=4, text="1x Arcane Signet", reason="not_a_deck_line"
-        ),
+        UnresolvedLine(line_number=2, text="0 Sol Ring", reason="not_a_deck_line"),
+        UnresolvedLine(line_number=4, text="0 Arcane Signet", reason="not_a_deck_line"),
     )
 
 
