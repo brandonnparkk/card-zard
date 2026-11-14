@@ -17,7 +17,7 @@ One physical release of a Card in a particular set, with its own set code, colle
 _Avoid_: Edition, version
 
 **Card Name**:
-The full name of a Card. For multi-faced cards this is both faces joined by ` // `, for example _Fable of the Mirror-Breaker // Reflection of Kiki-Jiko_.
+The full name of a Card. For multi-faced cards this is both faces joined by ` // `, for example _Fable of the Mirror-Breaker // Reflection of Kiki-Jiki_.
 
 **Front-Face Name**:
 The name of only the first face of a multi-faced Card, for example _Fable of the Mirror-Breaker_.
